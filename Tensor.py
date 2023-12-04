@@ -63,9 +63,12 @@ class Tensor:
                 for child in v._prev:
                     build_topo(child)
                 topo.append(v)
-        build_topo(self)
+        if not hasattr(self, 'topo'):
+            build_topo(self)
+            self.topo = topo
+
         self.grad = 1
-        for v in reversed(topo):
+        for v in reversed(self.topo):
             v._backward()
 
     def __mul__(self, other):
