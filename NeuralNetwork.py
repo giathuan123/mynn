@@ -4,7 +4,7 @@ import Tensor as t
 
 class Module:
     def zero_grad(self):
-        for p in self.parameters():
+        for p in self.params():
             p.grad = 0
 
     def params(self):
@@ -20,7 +20,6 @@ class Neuron(Module):
         self.non_linear_activation = non_linear_activation
 
     def __call__(self, x):
-
         for idx, xi in enumerate(x):
             if isinstance(xi, t.Tensor):
                 xi.name = f'x{idx}'
@@ -58,7 +57,7 @@ class MLP(Module):
         self.layers = [Layer(dimensions[i], dimensions[i+1], **kwargs)
                        for i in range(len(dim_outs))]
 
-    def __call__(self, x):
+    def __call__(self, x) -> list[t.Tensor]:
         out = x
         for layer in self.layers:
             out = layer(out)
