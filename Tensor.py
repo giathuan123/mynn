@@ -1,6 +1,5 @@
 from graphviz import Digraph
-from matplotlib import pyplot as plt
-
+from typing import Optional
 
 class Tensor:
     ADD = '+'
@@ -13,6 +12,7 @@ class Tensor:
         self.name = name
         self._op = _op
         self._prev = set(_graph)
+        self._parent: Optional[Tensor]= None
         self._backward = lambda: None
 
     def zero_grad(self):
@@ -28,30 +28,65 @@ class Tensor:
                      name="Relu", _graph=(self,), _op=Tensor.RELU)
 
         def _backward():
-            self.grad += (out.data > 0) * out.grad
-
+            self.grad = (out.data > 0) * out.grad
         out._backward = _backward
         return out
 
     def __add__(self, other):
         other = other if isinstance(other, Tensor) else Tensor(other)
-        out = Tensor(self.data + other.data, name=f'{self.name}+{other.name}',
-                     _graph=(self, other), _op=Tensor.ADD)
+
+        if self._parent:
+            self._parent.data = self.data + other.data
+            self._parent._prev = set((self, other))
+        else:
+            self._parent = Tensor(self.data + other.data,
+                              name=f'{self.name}+{other.name}',
+                              _graph=(self, other),
+                              _op="+")
 
         def _backward():
-            self.grad += out.grad
-            other.grad += out.grad
-        out._backward = _backward
-        return out
+            if not self._parent:
+                raise RuntimeError('No parent for backprop')
+            self.grad = self._parent.grad
+            other.grad = self._parent.grad
+        self._parent._backward = _backward
+        return self._parent
+
+    def __mul__(self, other):
+        other = other if isinstance(other, Tensor) else Tensor(other)
+        if self._parent:
+            self._parent.data = self.data * other.data
+            self._parent._prev = set((self, other))
+        else:
+            self._parent = Tensor(
+                self.data * other.data,
+                name=f'{self.name}*{other.name}',
+                _graph=(self, other),
+                _op='*'
+                )
+
+        def _backward():
+            if not self._parent:
+                raise RuntimeError('No parent for backprop')
+            self.grad = other.data * self._parent.grad
+            other.grad = self.data * self._parent.grad
+
+        self._parent._backward = _backward
+        return self._parent
 
     def __pow__(self, other):
         assert isinstance(other, (int, float))
-        out = Tensor(self.data**other, _graph=(self,), _op=f'**{other}')
-
         def _backward():
-            self.grad += (other * self.data**(other-1)) * out.grad
-        out._backward = _backward
-        return out
+            if not self._parent:
+                raise RuntimeError('No parent for backrop')
+            self.grad = (other * self.data**(other-1)) * self._parent.grad
+
+        if self._parent:
+            self._parent.data = self.data**other
+        else:
+            self._parent = Tensor(self.data**other, _graph=(self,), _op=f'**{other}')
+        self._parent._backward = _backward
+        return self._parent
 
     def backward(self):
         topo = []
@@ -71,32 +106,6 @@ class Tensor:
         for v in reversed(self.topo):
             v._backward()
 
-    def __mul__(self, other):
-        other = other if isinstance(other, Tensor) else Tensor(other)
-        out = Tensor(self.data * other.data,
-                     name=f'{self.name}*{other.name}', _graph=(self, other), _op='*')
-
-        def _backward():
-            self.grad += other.data * out.grad
-            other.grad += self.data * out.grad
-        out._backward = _backward
-        return out
-
-    def plot(self, dot=None, parent=None):
-        if not dot:
-            dot = Digraph(format='svg', graph_attr={'rankdir': 'TB'})
-
-        node_id = str(id(self))
-        dot.node(name=node_id, label='{%s | data %.4f | grad %.4f }' %
-                 (self.name, self.data, self.grad), shape='record')
-        if self._op:
-            dot.node(name=node_id + self._op, label=self._op)
-            dot.edge(node_id + self._op, node_id)
-        if parent:
-            dot.edge(node_id, str(id(parent)) + parent._op)
-        for node in self._prev:
-            node.plot(dot, parent=self)
-        return dot
 
     def __neg__(self):
         return self * -1
@@ -118,3 +127,19 @@ class Tensor:
 
     def __rtruediv__(self, other):  # other / self
         return other * self**-1
+
+    def plot(self, dot=None, parent=None):
+        if not dot:
+            dot = Digraph(format='svg', graph_attr={'rankdir': 'TB'})
+
+        node_id = str(id(self))
+        dot.node(name=node_id, label='{%s | data %.4f | grad %.4f }' %
+                 (self.name, self.data, self.grad), shape='record')
+        if self._op:
+            dot.node(name=node_id + self._op, label=self._op)
+            dot.edge(node_id + self._op, node_id)
+        if parent:
+            dot.edge(node_id, str(id(parent)) + parent._op)
+        for node in self._prev:
+            node.plot(dot, parent=self)
+        return dot
