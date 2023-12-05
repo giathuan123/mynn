@@ -1,5 +1,5 @@
-import random
 import Tensor as t
+import random
 
 
 class Module:
@@ -51,6 +51,14 @@ class Layer(Module):
         return f'Layer({", ".join(str(n) for n in self.neurons)})'
 
 
+class SGD:
+    def __init__(self, params, learning_rate):
+        self.params = params
+        self.learning_rate = learning_rate
+    def step(self):
+        for p in self.params:
+            p.data -= self.learning_rate*p.grad
+            
 class MLP(Module):
     def __init__(self, dim_in: int, dim_outs: list[int], **kwargs):
         dimensions = [dim_in] + dim_outs
