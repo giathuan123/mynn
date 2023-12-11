@@ -4,7 +4,7 @@ import numpy as np
 
 
 # init neural networks
-dim_in = 3 # in dimension
+dim_in = 100 # in dimension
 dim_outs = [1] # linear regression 
 mlp = MLP(dim_in, dim_outs) 
 
@@ -13,8 +13,9 @@ gt_weights = np.random.randint(1, 10, size=(dim_in)).tolist()
 gt_bias = 10
 
 # Generate ground truth data
-data_points = 100
+data_points = 20000
 data = np.random.randint(1, 10, size=(data_points, dim_in))
+
 y = np.matmul(data, gt_weights) + gt_bias
 data = data.tolist()
 y = y.tolist()
@@ -30,12 +31,10 @@ for epoch in range(EPOCHS):
     for xi, value in zip(data, y):
         mlp.zero_grad()
         out = mlp(xi)[0]
-        loss = (value - out)**2
+        loss = (value - out)**2 # MSE
+        loss.backward() # get gradient
         ave_loss += loss.data
-        loss.backward()
-        graph = loss.plot()
-        graph.view()
-        for p in mlp.params():
+        for p in mlp.params(): # similar to step in pytorch
             p.data -= learning_rate * p.grad
     ave_loss /= data_points
     print(f'{epoch}:{ave_loss}')
@@ -52,4 +51,6 @@ bias = mlp.layers[0].neurons[0].b.data
 weights = np.array(weights + [bias])
 gt_weights = gt_weights + [gt_bias]
 errors = np.sum((weights-gt_weights)**2)
+print('wieghts:', weights)
+print('gt_wieghts:', gt_weights)
 print("Errors: ", errors)
