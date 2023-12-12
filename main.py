@@ -51,6 +51,6 @@ bias = mlp.layers[0].neurons[0].b.data
 weights = np.array(weights + [bias])
 gt_weights = gt_weights + [gt_bias]
 errors = np.sum((weights-gt_weights)**2)
-print('wieghts:', weights)
+print('weights:', weights)
 print('gt_wieghts:', gt_weights)
 print("Errors: ", errors)
