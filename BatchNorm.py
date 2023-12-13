@@ -22,9 +22,7 @@ class BatchNorm:
         if not self.beta:
             self.beta = np.zeros(data.shape[1])
         norm = data.norm()
-        norm_out = norm(self.gamma) + self.beta
-        out = OptTensor(norm_out, children=data, backward_func='BatchNorm')
-        data.out = out
+        data.out = norm(self.gamma) + self.beta
         self.meaning_moving = self.alpha + \
             (1-self.alpha)*data.data.mean(axis=0)
         self.mean_std = self.alpha + (1-self.alpha)*data.data.std(axis=0)
@@ -39,6 +37,5 @@ class BatchNorm:
             # bias_grad = dL/db = dL/dy * dy/db
             # bias_grad = dL/db = dL/dy *
             # data.grad: dL/dx = dL/dy * dy/dx
-            data.grad = out.grad  # dL/dy
-        out._backward = backward
-        return out
+            pass
+        return None

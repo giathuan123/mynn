@@ -45,11 +45,12 @@ class OptTensor:
 
         def backward():
             assert self.out
-            jacobian = np.array()
-            # self.grad = n x m
-            # jacobian = n x n
-            # self.out.grad = n x m
-            self.grad = jacobian.T @ self.out.grad
+            self.grad = np.zeros_like(self.data)
+            for i in range(self.shape[0]):
+                current_softmax = softmax[i].reshape((1, softmax.shape[1]))
+                jacobian = np.diag(current_softmax.squeeze(0)) \
+                    - current_softmax @ current_softmax.T
+                self.grad[i] = jacobian.T @ self.out.grad[i]
         self.out._backward = backward
         return self.out
 
@@ -66,13 +67,7 @@ class OptTensor:
         return self.out
 
     def norm(self):
-        norm = (self.data - self.data.mean(axis=0)) / self.data.std(axis=0)
-        self.out = OptTensor(norm, children=(self), backward_func='Normalize')
-
-        def backward():
-            raise NotImplementedError()
-        self.out._backward = backward
-        return self.out
+        raise NotImplementedError()
 
     def __call__(self, operand):
         self.out = OptTensor(operand @ self.data,
