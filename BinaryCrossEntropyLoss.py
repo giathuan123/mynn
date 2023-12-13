@@ -35,26 +35,26 @@ class BinaryCrossEntropyLoss:
         out_tensor._backward = backward
         return out_tensor
 
-loss = BinaryCrossEntropyLoss()
-label: NDArray = np.random.randint(0, 2, size=(300,))
-x = OptTensor(np.zeros((label.shape[0], 2)))
-prob = x.softmax()
-
-itr = 0
-current_loss = None
-prob = None
-while(itr < 2):
-    prob = x.softmax()
-    current_loss = loss(prob, label)
-    current_loss.backward()
-    x.data -= 0.01*x.grad
-    # print(header('probs'))
-    # print(prob.data)
-    # print(header('label'))
-    # print(label)
-    # print('Current Loss', current_loss.data)
-    itr += 1
-
-assert prob
-print(current_loss)
-print('correct' if (prob.data.argmax(axis=1) == label).all() else 'not correct')
+# loss = BinaryCrossEntropyLoss()
+# label: NDArray = np.random.randint(0, 2, size=(300,))
+# x = OptTensor(np.zeros((label.shape[0], 2)))
+# prob = x.softmax()
+#
+# itr = 0
+# current_loss = None
+# prob = None
+# while(itr < 2):
+#     prob = x.softmax()
+#     current_loss = loss(prob, label)
+#     current_loss.backward()
+#     x.data -= 0.01*x.grad
+#     # print(header('probs'))
+#     # print(prob.data)
+#     # print(header('label'))
+#     # print(label)
+#     # print('Current Loss', current_loss.data)
+#     itr += 1
+#
+# assert prob
+# print(current_loss)
+# print('correct' if (prob.data.argmax(axis=1) == label).all() else 'not correct')

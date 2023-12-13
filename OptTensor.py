@@ -32,17 +32,17 @@ class OptTensor:
         self.grad = np.ones_like(self.data)
         current_node = self
         while current_node:
+            print(current_node)
             current_node._backward()
             current_node = current_node.children
 
     def zero_grad(self):
         self.grad = np.zeros_like(self.data)
 
-    def softmax(self):
-        exp = np.exp(self.data)
-        softmax = exp / np.expand_dims(exp.sum(axis=1), axis=1)
+    def softmax(self, temperature=1):
+        exp = np.exp(self.data/temperature)
+        softmax = exp / exp.sum(axis=1)
         self.out = OptTensor(softmax, children=self, backward_func="Softmax")
-
         def backward():
             assert self.out
             self.grad = np.zeros_like(self.data)
@@ -70,12 +70,18 @@ class OptTensor:
         raise NotImplementedError()
 
     def __call__(self, operand):
-        self.out = OptTensor(operand @ self.data,
-                             children=self, backward_func='MatMul')
+        if isinstance(operand, OptTensor):
+            self.out = OptTensor(operand.data @ self.data,
+                                 children=self, backward_func='MatMul')
+        else:
+            self.out = OptTensor(operand @ self.data, children=self, backward_func='MatMul')
 
         def backward():
             assert self.out
-            jacobian = operand
+            if isinstance(operand, OptTensor):
+                jacobian = operand.data
+            else:
+                jacobian = operand
             self.grad += jacobian.T @ self.out.grad
         self.out._backward = backward
         return self.out
