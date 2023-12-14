@@ -21,7 +21,7 @@ class OptTensor:
 
     def print(self):
         current_node = self
-        space = '\t'
+        space = ' '
         level = 0
         while current_node:
             print(space*level + repr(current_node))
@@ -32,7 +32,6 @@ class OptTensor:
         self.grad = np.ones_like(self.data)
         current_node = self
         while current_node:
-            print(current_node)
             current_node._backward()
             current_node = current_node.children
 
@@ -41,8 +40,9 @@ class OptTensor:
 
     def softmax(self, temperature=1):
         exp = np.exp(self.data/temperature)
-        softmax = exp / exp.sum(axis=1)
+        softmax = exp / np.expand_dims(exp.sum(axis=1), axis=1)
         self.out = OptTensor(softmax, children=self, backward_func="Softmax")
+
         def backward():
             assert self.out
             self.grad = np.zeros_like(self.data)
@@ -61,8 +61,8 @@ class OptTensor:
 
         def backward():
             assert self.out
-            self.grad += self.out.grad
-            other.grad += self.out.grad
+            self.grad = self.out.grad
+            other.grad = self.out.grad
         self.out._backward = backward
         return self.out
 
@@ -70,20 +70,19 @@ class OptTensor:
         raise NotImplementedError()
 
     def __call__(self, operand):
-        if isinstance(operand, OptTensor):
-            self.out = OptTensor(operand.data @ self.data,
-                                 children=self, backward_func='MatMul')
-        else:
-            self.out = OptTensor(operand @ self.data, children=self, backward_func='MatMul')
+        if not isinstance(operand, OptTensor):
+            operand = OptTensor(operand)
+        self.out = OptTensor(operand.data @ self.data,
+                             children=self,
+                             backward_func='MatMul')
 
         def backward():
             assert self.out
-            if isinstance(operand, OptTensor):
-                jacobian = operand.data
-            else:
-                jacobian = operand
-            self.grad += jacobian.T @ self.out.grad
+            jacobian = operand.data
+            operand.grad = self.out.grad @ self.data.T
+            self.grad = jacobian.T @ self.out.grad
         self.out._backward = backward
+        self.children = operand
         return self.out
 
     def relu(self):
