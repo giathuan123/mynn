@@ -4,20 +4,21 @@ import numpy as np
 
 
 class OptTensor:
-    def __init__(self, data: NDArray, children=None, backward_func=None):
+    def __init__(self, data: NDArray, children=None, backward_func=None, name=None):
         self.data = data
         self.grad = np.zeros_like(data)
         self.out: Optional[OptTensor]
         self.children = children
         self.backward_func = backward_func
         self._backward = lambda: None
+        self.name = name
 
     @property
     def shape(self):
         return self.data.shape
 
     def __repr__(self):
-        return f'OptTensor({self.shape}, backward_func={self.backward_func})'
+        return f'OptTensor({self.shape}, backward_func={self.backward_func}, {"name=" + self.name if self.name else ""})'
 
     def print(self):
         current_node = self
