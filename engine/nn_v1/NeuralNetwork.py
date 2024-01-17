@@ -1,4 +1,4 @@
-import Tensor as t
+from . import Tensor as t
 import random
 
 

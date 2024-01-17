@@ -1,4 +1,4 @@
-from NeuralNetwork import MLP
+from engine.nn_v1.NeuralNetwork import MLP
 from matplotlib import pyplot as plt
 import numpy as np
 
