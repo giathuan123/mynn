@@ -50,7 +50,7 @@ class OptTensor:
             for i in range(self.shape[0]):
                 current_softmax = softmax[i].reshape((1, softmax.shape[1]))
                 jacobian = np.diag(current_softmax.squeeze(0)) \
-                    - current_softmax @ current_softmax.T
+                    - current_softmax.T @ current_softmax
                 self.grad[i] = jacobian.T @ self.out.grad[i]
         self.out._backward = backward
         return self.out
