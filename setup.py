@@ -5,5 +5,5 @@ setup(
     version="1.0",
     description="Autograd engine using Numpy for Neural Network",
     packages=find_packages(include="engine"),
-    install_requires=["numpy"]
+    install_requires=["numpy", "torch", "scipy"]
 )

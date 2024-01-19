@@ -1,4 +1,4 @@
-from OptTensor import OptTensor
+from .OptTensor import OptTensor
 import numpy as np
 
 

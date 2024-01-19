@@ -1,4 +1,4 @@
-from OptTensor import OptTensor
+from .OptTensor import OptTensor
 from numpy._typing import NDArray
 import numpy as np
 
